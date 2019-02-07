@@ -40,6 +40,7 @@ from ..callbacks.eval import Evaluate
 from ..models.retinanet import retinanet_bbox
 from ..preprocessing.csv_generator import CSVGenerator
 from ..preprocessing.kitti import KittiGenerator
+from ..preprocessing.myvoc import MyVocGenerator
 from ..preprocessing.open_images import OpenImagesGenerator
 from ..preprocessing.pascal_voc import PascalVocGenerator
 from ..utils.anchors import make_shapes_callback
@@ -268,6 +269,24 @@ def create_generators(args, preprocess_image):
             'test',
             **common_args
         )
+    elif args.dataset_type == 'voc':
+        clsz = { k:v for v,k in enumerate(args.classes.split(',')) } if args.classes else None
+        train_generator = MyVocGenerator(
+            args.pascal_path,
+            'trainval',
+            image_extension=args.image_ext,
+            classes=clsz,
+            transform_generator=transform_generator,
+            **common_args
+        )
+
+        validation_generator = MyVocGenerator(
+            args.pascal_path,
+            'test',
+            image_extension=args.image_ext,
+            classes=clsz,
+            **common_args
+        )
     elif args.dataset_type == 'csv':
         train_generator = CSVGenerator(
             args.annotations,
@@ -368,6 +387,11 @@ def parse_args(args):
     pascal_parser = subparsers.add_parser('pascal')
     pascal_parser.add_argument('pascal_path', help='Path to dataset directory (ie. /tmp/VOCdevkit).')
 
+    voc_parser = subparsers.add_parser('voc')
+    voc_parser.add_argument('pascal_path', help='Path to dataset directory (ie. /tmp/VOCdevkit).')
+    voc_parser.add_argument('--image-ext', help='Image file extensions (ie. jpg)')
+    voc_parser.add_argument('--classes', help='Comma-seperated list of classes')
+
     kitti_parser = subparsers.add_parser('kitti')
     kitti_parser.add_argument('kitti_path', help='Path to dataset directory (ie. /tmp/kitti).')
 
@@ -419,6 +443,7 @@ def parse_args(args):
 
 
 def main(args=None):
+    print("Modified Keras-RetinaNet by MAILabs")
     # parse arguments
     if args is None:
         args = sys.argv[1:]
